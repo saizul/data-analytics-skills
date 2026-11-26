@@ -1,0 +1,12 @@
+order_id,order_date,customer_id,product,quantity,unit_price,status
+A1,2026-01-03,c1,Cotton Saree,1,"2,500",paid
+A1,2026-01-03,c1,Silk Scarf,2,600,paid
+A2,2026-01-10,c2,Cotton Saree,1,2500,paid
+A3,2026-01-15,c3,Panjabi,1,"1,800",cancelled
+A4,2026-01-20,c1,Panjabi,1,1800,delivered
+A5,2026-02-02,c4,Silk Scarf,3,600,paid
+A6,2026-02-14,c2,Cotton Saree,2,"২,৫০০",paid
+A7,2026-02-20,c5,Panjabi,1,1800,refunded
+A8,2026-03-05,c6,Silk Scarf,1,600,paid
+A9,2026-03-07,c4,Panjabi,2,1800,paid
+A10,2026-03-09,,Cotton Saree,1,2500,paid

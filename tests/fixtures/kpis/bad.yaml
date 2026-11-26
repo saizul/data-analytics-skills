@@ -1,0 +1,54 @@
+version: 1
+inputs:
+  - id: revenue
+    description: Paid order totals
+    source: orders.csv (total)
+    aggregation: sum
+  - id: orders
+    source: orders.csv (order_id)
+    aggregation: count_distinct
+  - id: sessions
+    description: GA4 sessions
+    source: ga4.csv
+    aggregation: total   # not a valid aggregation
+kpis:
+  - id: aov
+    name: Average order value
+    description: Revenue per order
+    formula: revenue / orders
+    unit: currency
+    grain: month
+    owner: TBD
+  - id: ConversionRate
+    name: Conversion rate
+    description: Orders divided by sessions for the period
+    formula: orders / visits
+    unit: percent
+    grain: weekly
+    owner: Growth
+    direction: up
+    zero_division: 0
+  - id: loop_a
+    name: Loop A
+    description: Broken definition that references loop_b
+    formula: loop_b + 1
+    unit: count
+    grain: day
+    owner: Data team
+    direction: neutral
+  - id: loop_b
+    name: Loop B
+    description: Broken definition that references loop_a
+    formula: (loop_a * 2
+    unit: count
+    grain: day
+    owner: Data team
+    direction: sideways
+  - id: margin
+    name: Margin
+    description: Gross margin share
+    formula: median_of(revenue)
+    unit: ratio
+    grain: month
+    owner: Finance
+    direction: up

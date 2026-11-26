@@ -1,0 +1,36 @@
+{
+  "name": "data-analytics-skills",
+  "description": "Agent Skills for small-business and product analytics from CSV exports, no BI tool needed.",
+  "owner": {
+    "name": "Saizul Amin",
+    "url": "https://github.com/saizul"
+  },
+  "plugins": [
+    {
+      "name": "data-analytics-skills",
+      "source": "./",
+      "description": "CSV profiling, data cleaning (Bangla digits, lakh/crore), KPI dictionaries, cohort retention, sales reports, GA4 export analysis, A/B test statistics and anomaly alerts.",
+      "category": "data",
+      "tags": [
+        "analytics",
+        "csv",
+        "data-cleaning",
+        "kpi",
+        "cohort-analysis",
+        "ga4",
+        "ab-testing",
+        "anomaly-detection"
+      ],
+      "skills": [
+        "./skills/csv-profiling",
+        "./skills/data-cleaning",
+        "./skills/kpi-definitions",
+        "./skills/cohort-retention",
+        "./skills/sales-report",
+        "./skills/ga4-export-analysis",
+        "./skills/ab-test-analysis",
+        "./skills/anomaly-alerts"
+      ]
+    }
+  ]
+}

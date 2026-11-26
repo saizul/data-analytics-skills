@@ -1,0 +1,47 @@
+name: Bug report
+description: A script crashed, computed a wrong number, or a skill gave wrong or misleading advice
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste real customer data** (names, phone numbers, emails, addresses, order details).
+        Reduce the file to the few rows that reproduce the problem and replace values with fakes.
+  - type: dropdown
+    id: skill
+    attributes:
+      label: Skill
+      options:
+        - csv-profiling
+        - data-cleaning
+        - kpi-definitions
+        - cohort-retention
+        - sales-report
+        - ga4-export-analysis
+        - ab-test-analysis
+        - anomaly-alerts
+        - validator / repository tooling
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran, its output, and a minimal anonymised CSV/JSON sample (header + a few rows).
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: For wrong numbers, show how you calculated the expected value.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "Python 3.12, macOS, Claude Code / Codex CLI, export from Shopify / GA4 / ..."
+    validations:
+      required: true

@@ -1,0 +1,49 @@
+name: New skill proposal
+description: Propose a new skill (or offer to write one)
+labels: ["new skill"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Good skills solve one recurring analytics task end to end from files people already have
+        (CSV, JSON exports), are safe by default (read-only, no network, no customer data printed),
+        and include a tested standard-library script when numbers must be exact.
+        See CONTRIBUTING.md and templates/skill/SKILL.md.
+  - type: input
+    id: name
+    attributes:
+      label: Skill name
+      description: lowercase-with-hyphens, max 64 characters
+      placeholder: "rfm-segmentation"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What task does it handle, and when should the agent use it?
+      description: Example user requests and the export files involved.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Proposed workflow
+      description: Steps, exact commands, decision points, what the output looks like.
+  - type: textarea
+    id: script
+    attributes:
+      label: Helper script (optional)
+      description: What would a deterministic script compute? Inputs, outputs, formulas, exit codes.
+  - type: textarea
+    id: safety
+    attributes:
+      label: Data safety
+      description: What personal or business data does it touch, and how does the skill avoid leaking or misusing it?
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to write this skill

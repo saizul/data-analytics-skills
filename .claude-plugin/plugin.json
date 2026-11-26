@@ -1,0 +1,25 @@
+{
+  "name": "data-analytics-skills",
+  "displayName": "Data Analytics Skills",
+  "version": "0.1.0",
+  "description": "Agent Skills for small-business and product analytics from CSV exports: profiling, cleaning, KPI definitions, cohort retention, sales reports, GA4 exports, A/B tests and anomaly alerts. Tested Python scripts, standard library only.",
+  "author": {
+    "name": "Saizul Amin",
+    "url": "https://github.com/saizul"
+  },
+  "homepage": "https://github.com/saizul/data-analytics-skills",
+  "repository": "https://github.com/saizul/data-analytics-skills",
+  "license": "MIT",
+  "keywords": [
+    "analytics",
+    "data-analysis",
+    "csv",
+    "kpi",
+    "cohort-retention",
+    "sales-report",
+    "ga4",
+    "ab-testing",
+    "anomaly-detection",
+    "small-business"
+  ]
+}

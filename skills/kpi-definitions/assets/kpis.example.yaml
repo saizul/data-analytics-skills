@@ -1,0 +1,54 @@
+# KPI dictionary. Validate: python3 scripts/validate_kpis.py kpis.yaml
+version: 1
+inputs:
+  - id: gross_revenue
+    description: Sum of order totals including shipping, before refunds
+    source: orders.csv (total), status in paid, shipped, delivered
+    aggregation: sum
+  - id: refunds
+    description: Sum of refunded amounts by refund date
+    source: refunds.csv (amount)
+    aggregation: sum
+  - id: orders
+    description: Count of distinct paid orders
+    source: orders.csv (order_id)
+    aggregation: count_distinct
+  - id: customers
+    description: Count of distinct customers with at least one paid order
+    source: orders.csv (customer_id)
+    aggregation: count_distinct
+  - id: repeat_customers
+    description: Distinct customers with two or more paid orders in the period
+    source: orders.csv (customer_id)
+    aggregation: count_distinct
+
+kpis:
+  - id: net_revenue
+    name: Net revenue
+    description: Revenue kept after refunds, the headline sales number
+    formula: gross_revenue - refunds
+    unit: currency
+    currency: BDT
+    grain: month
+    owner: Finance (Head of Finance)
+    direction: up
+  - id: aov
+    name: Average order value
+    description: Net revenue per paid order
+    formula: net_revenue / orders
+    unit: currency
+    currency: BDT
+    grain: month
+    owner: Growth team
+    direction: up
+    zero_division: null
+  - id: repeat_rate
+    name: Repeat customer rate
+    description: Share of customers in the period who ordered at least twice
+    formula: repeat_customers / customers
+    unit: percent
+    grain: month
+    owner: CRM lead
+    direction: up
+    zero_division: 0
+    target: 0.3
