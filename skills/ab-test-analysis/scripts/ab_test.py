@@ -5,6 +5,7 @@ sample ratio mismatch (SRM) check, and sample size / duration planning.
   ab_test.py analyze --control 10000 500 --variant 10000 560
   ab_test.py analyze --csv results.csv            # variant,visitors,conversions  or one row per user
   ab_test.py sample-size --baseline 0.05 --mde 0.10 --daily-traffic 2000
+  ab_test.py sample-size --baseline 0.05 --mde 0.10 --split 90,10   # unequal allocation
 
 Python 3.8+ standard library only (statistics.NormalDist, math).
 Exit codes: 0 = ok, 1 = sample ratio mismatch or invalid counts (do not trust the result), 2 = error.
@@ -91,18 +92,48 @@ def srm_check(visitors: list[int], weights: list[float] | None = None) -> dict:
 
 
 def sample_size(
-    baseline: float, mde: float, relative: bool = True, alpha: float = 0.05, power: float = 0.8, alternative="two-sided"
+    baseline: float,
+    mde: float,
+    relative: bool = True,
+    alpha: float = 0.05,
+    power: float = 0.8,
+    alternative="two-sided",
+    ratio: float = 1.0,
 ) -> int:
-    """Visitors needed per group to detect the given change with a two-proportion z-test."""
+    """Control visitors needed to detect the change with a two-proportion z-test.
+
+    ratio = variant visitors / control visitors (1.0 = equal split, 1/9 = a 90/10 holdout).
+    The variant then needs ceil(result * ratio) visitors.
+    """
     p1 = baseline
     p2 = baseline * (1 + mde) if relative else baseline + mde
     if not (0 < p1 < 1 and 0 < p2 < 1) or p1 == p2:
         raise ValueError(f"baseline {p1} and target {p2} must be different rates between 0 and 1")
+    if ratio <= 0:
+        raise ValueError("ratio must be > 0")
     za = N.inv_cdf(1 - alpha / 2) if alternative == "two-sided" else N.inv_cdf(1 - alpha)
     zb = N.inv_cdf(power)
-    pbar = (p1 + p2) / 2
-    num = za * math.sqrt(2 * pbar * (1 - pbar)) + zb * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2))
+    pbar = (p1 + ratio * p2) / (1 + ratio)
+    num = za * math.sqrt(pbar * (1 - pbar) * (1 + 1 / ratio)) + zb * math.sqrt(p1 * (1 - p1) + p2 * (1 - p2) / ratio)
     return math.ceil(num**2 / (p2 - p1) ** 2)
+
+
+def split_sample_sizes(
+    baseline: float,
+    mde: float,
+    weights: list[float],
+    relative: bool = True,
+    alpha: float = 0.05,
+    power: float = 0.8,
+    alternative="two-sided",
+) -> list[int]:
+    """Visitors per group for a planned split; weights[0] is the control.
+
+    Every variant must reach the power against the control, so the control size is the
+    largest any variant needs and each variant gets its share of that.
+    """
+    control = max(sample_size(baseline, mde, relative, alpha, power, alternative, w / weights[0]) for w in weights[1:])
+    return [control] + [math.ceil(control * w / weights[0] - 1e-9) for w in weights[1:]]
 
 
 def analyze(groups: list[dict], alpha: float = 0.05, alternative: str = "two-sided", weights=None) -> dict:
@@ -306,24 +337,46 @@ def main(argv: list[str] | None = None) -> int:
     s.add_argument("--power", type=float, default=0.8)
     s.add_argument("--groups", type=int, default=2, help="groups including control (default 2; Bonferroni for >2)")
     s.add_argument("--alternative", choices=["two-sided", "greater"], default="two-sided")
+    s.add_argument(
+        "--split", help="planned traffic split, control first, e.g. 90,10 or 50,25,25 (default equal; sets --groups)"
+    )
     s.add_argument("--daily-traffic", type=float, help="eligible visitors per day across all groups")
     s.add_argument("--json", action="store_true", help="print JSON")
     args = p.parse_args(argv)
     try:
         if args.cmd == "sample-size":
+            weights = None
+            if args.split:
+                weights = [float(x) for x in re.split(r"[,/:]", args.split) if x.strip()]
+                if len(weights) < 2 or any(w <= 0 for w in weights):
+                    raise ValueError("--split needs 2 or more positive numbers, control first, e.g. 90,10")
+                args.groups = len(weights)
             alpha = args.alpha / (args.groups - 1) if args.groups > 2 else args.alpha
-            n = sample_size(args.baseline, args.mde, not args.absolute, alpha, args.power, args.alternative)
             target = args.baseline * (1 + args.mde) if not args.absolute else args.baseline + args.mde
+            if weights and len(set(weights)) > 1:
+                sizes = split_sample_sizes(
+                    args.baseline, args.mde, weights, not args.absolute, alpha, args.power, args.alternative
+                )
+            else:
+                sizes = [sample_size(args.baseline, args.mde, not args.absolute, alpha, args.power, args.alternative)]
+                sizes *= args.groups
+            n, total = max(sizes), sum(sizes)
             res = {
                 "per_group": n,
-                "total": n * args.groups,
+                "total": total,
                 "baseline": args.baseline,
                 "target": target,
                 "alpha": alpha,
                 "power": args.power,
             }
+            if len(set(sizes)) > 1:
+                share = sum(weights)
+                res["split"] = [round(w / share, 4) for w in weights]
+                res["per_group_by_split"] = sizes
+                equal = sample_size(args.baseline, args.mde, not args.absolute, alpha, args.power, args.alternative)
+                res["total_with_equal_split"] = equal * args.groups
             if args.daily_traffic:
-                res["days"] = math.ceil(n * args.groups / args.daily_traffic)
+                res["days"] = math.ceil(total / args.daily_traffic)
                 res["days_rounded_to_weeks"] = math.ceil(res["days"] / 7) * 7
             if args.json:
                 print(json.dumps(res, indent=2))
@@ -332,7 +385,20 @@ def main(argv: list[str] | None = None) -> int:
                     f"Baseline {args.baseline * 100:.2f}% -> target {target * 100:.2f}% "
                     f"(alpha {alpha:.4g}, power {args.power:.0%}, {args.alternative})"
                 )
-                print(f"Visitors needed: {n:,} per group, {n * args.groups:,} in total")
+                if "per_group_by_split" in res:
+                    parts = ", ".join(
+                        f"{name} {size:,} ({share:.0%})"
+                        for name, size, share in zip(
+                            ["control"] + [f"variant {c}" for c in "BCDEFGH"], sizes, res["split"]
+                        )
+                    )
+                    print(f"Visitors needed: {parts}; {total:,} in total")
+                    print(
+                        f"An equal split would need {res['total_with_equal_split']:,} in total "
+                        f"(this split needs {total / res['total_with_equal_split']:.2f}x that traffic)"
+                    )
+                else:
+                    print(f"Visitors needed: {n:,} per group, {total:,} in total")
                 if "days" in res:
                     print(
                         f"Duration: {res['days']} days at {args.daily_traffic:,.0f}/day; "

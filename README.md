@@ -34,7 +34,7 @@ script that computes the numbers exactly, offline, on your machine.
 | [cohort-retention](skills/cohort-retention/SKILL.md) | Monthly/weekly cohorts, retention by period with partial periods marked, weighted averages, cumulative revenue per customer (LTV) | "Do customers who first bought in January come back?" |
 | [sales-report](skills/sales-report/SKILL.md) | Revenue, orders, AOV, units, customers, repeat rate, daily/weekly/monthly trend with new vs returning, top products, Markdown output | "Write the October sales report from this Shopify export" |
 | [ga4-export-analysis](skills/ga4-export-analysis/SKILL.md) | GA4 report CSVs and BigQuery event JSON: sessions, engagement, conversions and revenue by source/medium, landing page, device, date | "Which channels and landing pages actually convert?" |
-| [ab-test-analysis](skills/ab-test-analysis/SKILL.md) | Lift, two-proportion z-test p-value, confidence interval, Bonferroni, sample ratio mismatch check, sample size and test duration | "Variant B: 5.8% vs 5.0%. Did it win? How long should the next test run?" |
+| [ab-test-analysis](skills/ab-test-analysis/SKILL.md) | Lift, two-proportion z-test p-value, confidence interval, Bonferroni, sample ratio mismatch check, sample size and test duration (equal or unequal splits) | "Variant B: 5.8% vs 5.0%. Did it win? How long should the next test run?" |
 | [anomaly-alerts](skills/anomaly-alerts/SKILL.md) | Rolling median + MAD robust z-scores, weekday seasonality, missing days, one-line alerts and exit codes for cron/CI | "Revenue fell yesterday. Is that unusual?" |
 
 ## Install

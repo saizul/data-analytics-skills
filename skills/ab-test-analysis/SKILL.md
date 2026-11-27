@@ -37,7 +37,10 @@ Paths below are relative to this skill's folder (in Claude Code: `${CLAUDE_SKILL
    python3 scripts/ab_test.py sample-size --baseline 0.04 --mde 0.10 --daily-traffic 2500
    python3 scripts/ab_test.py sample-size --baseline 0.04 --mde 0.005 --absolute --power 0.9
    python3 scripts/ab_test.py sample-size --baseline 0.04 --mde 0.15 --groups 3
+   python3 scripts/ab_test.py sample-size --baseline 0.04 --mde 0.10 --split 90,10 --daily-traffic 2500
    ```
+   `--split` (control first) plans unequal allocations such as a 90/10 holdout: it prints
+   visitors per group and how much more total traffic the split costs than 50/50.
    `--mde 0.10` = detect a +10% relative change. Round the duration up to full weeks. If the
    duration is longer than ~6 weeks, test a bolder change or a higher-traffic page.
 2. **Collect the facts** for a finished test: visitors and conversions per group (users, not

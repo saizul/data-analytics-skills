@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `ab-test-analysis`: `ab_test.py sample-size --split 90,10` plans unequal traffic splits
+  (control first, any number of groups). It prints visitors per group, the total, the
+  duration, and the total an equal split would need; JSON adds `split`,
+  `per_group_by_split` and `total_with_equal_split`. `sample_size()` takes a `ratio`.
+
 ## [0.1.0] - 2026-11-26
 
 ### Added
