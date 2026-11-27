@@ -147,3 +147,72 @@ def test_cli_sample_size():
     data = json.loads(r.stdout)
     assert data["alpha"] == pytest.approx(0.025) and data["total"] == data["per_group"] * 3
     assert run_script(SKILL, SCRIPT, "sample-size", "--baseline", "1.5", "--mde", "0.1").returncode == 2
+
+
+def test_ratio_one_matches_equal_split():
+    assert mod.sample_size(0.05, 0.1, ratio=1.0) == mod.sample_size(0.05, 0.1)
+    with pytest.raises(ValueError):
+        mod.sample_size(0.05, 0.1, ratio=0)
+
+
+def test_unequal_split_needs_more_total_traffic():
+    equal = mod.sample_size(0.05, 0.1)
+    control, variant = mod.split_sample_sizes(0.05, 0.1, [90, 10])
+    assert variant == pytest.approx(control / 9, abs=1)
+    # the small arm dominates: the variant needs more than an equal-split group would
+    # need, and the total is several times the equal-split total (about (1+k)^2/(4k) = 2.78x)
+    assert variant > equal / 2 and variant < equal
+    assert (control + variant) / (2 * equal) == pytest.approx(100**2 / (4 * 90 * 10), rel=0.05)
+
+
+def test_split_is_symmetric_in_total():
+    a = sum(mod.split_sample_sizes(0.05, 0.1, [80, 20]))
+    b = sum(mod.split_sample_sizes(0.05, 0.1, [20, 80]))
+    assert a == pytest.approx(b, rel=0.05)
+
+
+def test_split_three_groups_uses_largest_control_need():
+    sizes = mod.split_sample_sizes(0.05, 0.1, [50, 25, 25], alpha=0.025)
+    assert len(sizes) == 3
+    assert sizes[1] == sizes[2] == pytest.approx(sizes[0] / 2, abs=1)
+
+
+def test_cli_sample_size_split():
+    r = run_script(
+        SKILL,
+        SCRIPT,
+        "sample-size",
+        "--baseline",
+        "0.05",
+        "--mde",
+        "0.1",
+        "--split",
+        "90,10",
+        "--daily-traffic",
+        "5000",
+        "--json",
+    )
+    assert r.returncode == 0, r.stderr
+    res = json.loads(r.stdout)
+    control, variant = res["per_group_by_split"]
+    assert res["split"] == [0.9, 0.1]
+    assert res["total"] == control + variant
+    assert res["total"] > res["total_with_equal_split"]
+    assert res["days"] == -(-res["total"] // 5000)
+    text = run_script(SKILL, SCRIPT, "sample-size", "--baseline", "0.05", "--mde", "0.1", "--split", "90/10")
+    assert text.returncode == 0 and "control" in text.stdout and "(10%)" in text.stdout
+
+
+def test_cli_sample_size_equal_split_matches_default_and_bad_split():
+    eq = json.loads(
+        run_script(
+            SKILL, SCRIPT, "sample-size", "--baseline", "0.05", "--mde", "0.1", "--split", "50,50", "--json"
+        ).stdout
+    )
+    default = json.loads(
+        run_script(SKILL, SCRIPT, "sample-size", "--baseline", "0.05", "--mde", "0.1", "--json").stdout
+    )
+    assert eq == default
+    for bad in ("100", "90,0", "a,b"):
+        r = run_script(SKILL, SCRIPT, "sample-size", "--baseline", "0.05", "--mde", "0.1", "--split", bad)
+        assert r.returncode == 2, bad
